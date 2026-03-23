@@ -348,7 +348,7 @@
         
         async function refreshData() {
             try {
-                const response = await fetch('/api/submissions');
+                const response = await fetch('https://dolly-giveaway-backend.onrender.com/api/submissions');
                 const data = await response.json();
                 
                 if (Array.isArray(data)) {
