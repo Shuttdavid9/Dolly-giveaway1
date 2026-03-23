@@ -20,20 +20,39 @@ cloudinary.config({
 });
 
 // ==================== MONGODB CONFIGURATION ====================
-const MONGODB_URI = 'mongodb+srv://shuttdavid9_db_user:te8MB8stDbnX6Zs6@cluster0.mmyycd2.mongodb.net/?appName=Cluster0';
+const MONGODB_URI = 'mongodb+srv://shuttdavid9_db_user:te8MB8stDbnX6Zs6@cluster0.mmyycd2.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
 let db;
 let submissionsCollection;
 
-// Connect to MongoDB
+// Connect to MongoDB with robust SSL options
 async function connectToMongoDB() {
     try {
-        const client = new MongoClient(MONGODB_URI);
+        const client = new MongoClient(MONGODB_URI, {
+            serverSelectionTimeoutMS: 15000,
+            socketTimeoutMS: 60000,
+            connectTimeoutMS: 15000,
+            tls: true,
+            tlsAllowInvalidCertificates: false,
+            retryWrites: true,
+            retryReads: true,
+            family: 4,
+            maxPoolSize: 10,
+            minPoolSize: 2
+        });
         await client.connect();
         db = client.db('dolly_giveaway');
         submissionsCollection = db.collection('submissions');
+        
+        // Create index for faster queries
+        await submissionsCollection.createIndex({ trackingNumber: 1 }, { unique: true });
+        await submissionsCollection.createIndex({ submissionDate: -1 });
+        
         console.log('✅ Connected to MongoDB Atlas');
+        return client;
     } catch (error) {
-        console.error('❌ MongoDB connection error:', error);
+        console.error('❌ MongoDB connection error:', error.message);
+        console.log('🔄 Will retry in 30 seconds...');
+        setTimeout(connectToMongoDB, 30000);
     }
 }
 connectToMongoDB();
@@ -92,7 +111,9 @@ async function uploadToCloudinary(filePath, folder, publicId) {
             resource_type: 'image'
         });
         // Delete local temp file after upload
-        fs.unlinkSync(filePath);
+        if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+        }
         return result.secure_url;
     } catch (error) {
         console.error('Cloudinary upload error:', error);
@@ -245,7 +266,7 @@ app.get('/admin', requireAdmin, (req, res) => {
 app.get('/api/submissions', requireAdmin, async (req, res) => {
     try {
         if (!submissionsCollection) {
-            return res.status(500).json({ error: 'Database not connected' });
+            return res.status(503).json({ error: 'Database connecting, please wait...' });
         }
         const submissions = await submissionsCollection.find({}).sort({ submissionDate: -1 }).toArray();
         res.json(submissions);
@@ -264,6 +285,13 @@ app.post('/api/submit', upload.fields([
     const startTime = Date.now();
     try {
         console.log('📥 New submission received!');
+        
+        if (!submissionsCollection) {
+            return res.status(503).json({ 
+                success: false, 
+                error: 'Database is connecting, please try again in a moment.' 
+            });
+        }
         
         const formData = req.body;
         const files = req.files;
@@ -369,8 +397,8 @@ app.listen(PORT, () => {
     console.log(`
     ╔════════════════════════════════════════════════════════════════╗
     ║   🎤 DOLLY PARTON GIVEAWAY SYSTEM 🎸                           ║
-    ║   ✅ MongoDB Connected (Permanent Storage)                     ║
     ║   ✅ Cloudinary Connected (Permanent Image Storage)            ║
+    ║   ⏳ MongoDB Connecting... (Permanent Data Storage)            ║
     ║   Server running at: http://localhost:${PORT}                      ║
     ║   Admin Login: http://localhost:${PORT}/admin-login                ║
     ║   Password: Dolly2024Secure!                                   ║
