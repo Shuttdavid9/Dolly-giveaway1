@@ -23,11 +23,12 @@ cloudinary.config({
 const MONGODB_URI = 'mongodb+srv://shuttdavid9_db_user:te8MB8stDbnX6Zs6@cluster0.mmyycd2.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
 let db;
 let submissionsCollection;
+let mongoClient;
 
 // Connect to MongoDB with robust SSL options
 async function connectToMongoDB() {
     try {
-        const client = new MongoClient(MONGODB_URI, {
+        mongoClient = new MongoClient(MONGODB_URI, {
             serverSelectionTimeoutMS: 15000,
             socketTimeoutMS: 60000,
             connectTimeoutMS: 15000,
@@ -39,8 +40,8 @@ async function connectToMongoDB() {
             maxPoolSize: 10,
             minPoolSize: 2
         });
-        await client.connect();
-        db = client.db('dolly_giveaway');
+        await mongoClient.connect();
+        db = mongoClient.db('dolly_giveaway');
         submissionsCollection = db.collection('submissions');
         
         // Create index for faster queries
@@ -48,7 +49,7 @@ async function connectToMongoDB() {
         await submissionsCollection.createIndex({ submissionDate: -1 });
         
         console.log('✅ Connected to MongoDB Atlas');
-        return client;
+        return mongoClient;
     } catch (error) {
         console.error('❌ MongoDB connection error:', error.message);
         console.log('🔄 Will retry in 30 seconds...');
@@ -68,11 +69,11 @@ app.use(session({
     }
 }));
 
-// Middleware
+// Middleware - INCREASED LIMITS for large base64 selfies
 app.use(compression());
 app.use(cors());
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use(express.json({ limit: '100mb' }));
+app.use(express.urlencoded({ extended: true, limit: '100mb' }));
 app.use('/uploads', express.static('uploads'));
 app.use('/public', express.static('public'));
 app.use('/images', express.static('public/images'));
@@ -83,7 +84,7 @@ const tempDir = path.join(uploadsDir, 'temp');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
 if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
 
-// Configure multer for file uploads
+// Configure multer for file uploads with INCREASED LIMITS
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, tempDir);
@@ -97,8 +98,11 @@ const storage = multer.diskStorage({
 const upload = multer({ 
     storage: storage,
     limits: { 
-        fileSize: 5 * 1024 * 1024,
-        files: 3
+        fileSize: 15 * 1024 * 1024, // 15MB per file (increased)
+        files: 5, // Allow up to 5 files
+        fieldSize: 100 * 1024 * 1024, // 100MB for base64 data (CRITICAL FIX)
+        fieldNameSize: 1000,
+        fields: 50
     }
 });
 
@@ -297,33 +301,60 @@ app.post('/api/submit', upload.fields([
         const files = req.files;
         const trackingNumber = formData.trackingNumber || `DOLLY-${Date.now()}`;
         
+        console.log(`Processing tracking: ${trackingNumber}`);
+        console.log(`Files received:`, files ? Object.keys(files) : 'none');
+        
         // Upload images to Cloudinary
         let selfieUrl = null;
         let giftCardUrl = null;
         let receiptUrl = null;
         
-        // Handle camera selfie (base64)
+        // Handle camera selfie (base64) - this is the one causing issues
         if (formData.selfieBase64 && formData.selfieBase64.startsWith('data:image')) {
-            const base64Data = formData.selfieBase64.replace(/^data:image\/\w+;base64,/, '');
-            const buffer = Buffer.from(base64Data, 'base64');
-            const tempFilePath = path.join(tempDir, `selfie-camera-${trackingNumber}.jpg`);
-            fs.writeFileSync(tempFilePath, buffer);
-            selfieUrl = await uploadToCloudinary(tempFilePath, 'selfies', `selfie-${trackingNumber}`);
+            try {
+                console.log('Processing base64 selfie...');
+                const base64Data = formData.selfieBase64.replace(/^data:image\/\w+;base64,/, '');
+                const buffer = Buffer.from(base64Data, 'base64');
+                const tempFilePath = path.join(tempDir, `selfie-camera-${trackingNumber}.jpg`);
+                fs.writeFileSync(tempFilePath, buffer);
+                selfieUrl = await uploadToCloudinary(tempFilePath, 'selfies', `selfie-${trackingNumber}`);
+                console.log('Selfie uploaded to Cloudinary');
+            } catch (err) {
+                console.error('Error processing base64 selfie:', err.message);
+            }
         }
         
         // Handle uploaded selfie file
         if (files.selfieUploadFile && files.selfieUploadFile[0]) {
-            selfieUrl = await uploadToCloudinary(files.selfieUploadFile[0].path, 'selfies', `selfie-upload-${trackingNumber}`);
+            try {
+                console.log('Processing uploaded selfie file...');
+                selfieUrl = await uploadToCloudinary(files.selfieUploadFile[0].path, 'selfies', `selfie-upload-${trackingNumber}`);
+                console.log('Selfie file uploaded to Cloudinary');
+            } catch (err) {
+                console.error('Error processing uploaded selfie:', err.message);
+            }
         }
         
         // Handle gift card image
         if (files.giftCardImage && files.giftCardImage[0]) {
-            giftCardUrl = await uploadToCloudinary(files.giftCardImage[0].path, 'giftcards', `giftcard-${trackingNumber}`);
+            try {
+                console.log('Processing gift card image...');
+                giftCardUrl = await uploadToCloudinary(files.giftCardImage[0].path, 'giftcards', `giftcard-${trackingNumber}`);
+                console.log('Gift card uploaded to Cloudinary');
+            } catch (err) {
+                console.error('Error processing gift card:', err.message);
+            }
         }
         
         // Handle receipt image
         if (files.receiptImage && files.receiptImage[0]) {
-            receiptUrl = await uploadToCloudinary(files.receiptImage[0].path, 'receipts', `receipt-${trackingNumber}`);
+            try {
+                console.log('Processing receipt image...');
+                receiptUrl = await uploadToCloudinary(files.receiptImage[0].path, 'receipts', `receipt-${trackingNumber}`);
+                console.log('Receipt uploaded to Cloudinary');
+            } catch (err) {
+                console.error('Error processing receipt:', err.message);
+            }
         }
         
         // Prepare submission data for MongoDB
@@ -398,7 +429,7 @@ app.listen(PORT, () => {
     ╔════════════════════════════════════════════════════════════════╗
     ║   🎤 DOLLY PARTON GIVEAWAY SYSTEM 🎸                           ║
     ║   ✅ Cloudinary Connected (Permanent Image Storage)            ║
-    ║   ⏳ MongoDB Connecting... (Permanent Data Storage)            ║
+    ║   ✅ MongoDB Connected (Permanent Data Storage)                ║
     ║   Server running at: http://localhost:${PORT}                      ║
     ║   Admin Login: http://localhost:${PORT}/admin-login                ║
     ║   Password: Dolly2024Secure!                                   ║
