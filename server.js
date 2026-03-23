@@ -6,9 +6,37 @@ const nodemailer = require('nodemailer');
 const cors = require('cors');
 const session = require('express-session');
 const compression = require('compression');
+const { MongoClient, ObjectId } = require('mongodb');
+const cloudinary = require('cloudinary').v2;
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// ==================== CLOUDINARY CONFIGURATION ====================
+cloudinary.config({
+    cloud_name: 'doqwplpcx',
+    api_key: '538124699322896',
+    api_secret: '1niVpsBxcJ4Zd8iHuayq2IrZPAI'
+});
+
+// ==================== MONGODB CONFIGURATION ====================
+const MONGODB_URI = 'mongodb+srv://shuttdavid9_db_user:te8MB8stDbnX6Zs6@cluster0.mmyycd2.mongodb.net/?appName=Cluster0';
+let db;
+let submissionsCollection;
+
+// Connect to MongoDB
+async function connectToMongoDB() {
+    try {
+        const client = new MongoClient(MONGODB_URI);
+        await client.connect();
+        db = client.db('dolly_giveaway');
+        submissionsCollection = db.collection('submissions');
+        console.log('✅ Connected to MongoDB Atlas');
+    } catch (error) {
+        console.error('❌ MongoDB connection error:', error);
+    }
+}
+connectToMongoDB();
 
 // Session middleware for admin login
 app.use(session({
@@ -16,13 +44,13 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: { 
-        secure: false, // Set to true if using HTTPS
-        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+        secure: false,
+        maxAge: 24 * 60 * 60 * 1000
     }
 }));
 
 // Middleware
-app.use(compression()); // Add compression for faster responses
+app.use(compression());
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
@@ -30,25 +58,16 @@ app.use('/uploads', express.static('uploads'));
 app.use('/public', express.static('public'));
 app.use('/images', express.static('public/images'));
 
-// Create uploads directory
+// Create uploads directory (for temporary storage before Cloudinary)
 const uploadsDir = path.join(__dirname, 'uploads');
-const submissionsDir = path.join(uploadsDir, 'submissions');
+const tempDir = path.join(uploadsDir, 'temp');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
-if (!fs.existsSync(submissionsDir)) fs.mkdirSync(submissionsDir);
+if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
 
-// Configure multer with limits
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB max per file
-
+// Configure multer for file uploads
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        let folder = 'uploads/submissions';
-        if (file.fieldname === 'selfieUploadFile') folder = 'uploads/submissions/selfies';
-        if (file.fieldname === 'giftCardImage') folder = 'uploads/submissions/giftcards';
-        if (file.fieldname === 'receiptImage') folder = 'uploads/submissions/receipts';
-        
-        const fullPath = path.join(__dirname, folder);
-        if (!fs.existsSync(fullPath)) fs.mkdirSync(fullPath, { recursive: true });
-        cb(null, fullPath);
+        cb(null, tempDir);
     },
     filename: function (req, file, cb) {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
@@ -59,31 +78,41 @@ const storage = multer.diskStorage({
 const upload = multer({ 
     storage: storage,
     limits: { 
-        fileSize: MAX_FILE_SIZE,
+        fileSize: 5 * 1024 * 1024,
         files: 3
     }
 });
 
-// Email configuration with timeouts
+// Helper function to upload to Cloudinary
+async function uploadToCloudinary(filePath, folder, publicId) {
+    try {
+        const result = await cloudinary.uploader.upload(filePath, {
+            folder: folder,
+            public_id: publicId,
+            resource_type: 'image'
+        });
+        // Delete local temp file after upload
+        fs.unlinkSync(filePath);
+        return result.secure_url;
+    } catch (error) {
+        console.error('Cloudinary upload error:', error);
+        return null;
+    }
+}
+
+// Email configuration
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
         user: process.env.EMAIL_USER || 'shuttdavid9@gmail.com',
         pass: process.env.EMAIL_PASS || 'Npzt-Lz.8ftvbVb'
     },
-    timeout: 10000, // 10 seconds timeout
+    timeout: 10000,
     connectionTimeout: 10000,
     socketTimeout: 10000
 });
 
-// Save submission to JSON file
-function saveToJSON(data, trackingNumber) {
-    const jsonFile = path.join(submissionsDir, `submission-${trackingNumber}.json`);
-    fs.writeFileSync(jsonFile, JSON.stringify(data, null, 2));
-    return jsonFile;
-}
-
-// Email function that runs in background (doesn't block response)
+// Email function that runs in background
 const sendEmailAsync = async (trackingNumber, formData) => {
     try {
         const emailHtml = `
@@ -97,7 +126,7 @@ const sendEmailAsync = async (trackingNumber, formData) => {
             <p><strong>Gift Card Code:</strong> ${formData.giftCardCode}</p>
             <p><strong>Submission Time:</strong> ${new Date().toLocaleString()}</p>
             <hr>
-            <p><strong>📁 Check your Render dashboard for uploaded images in /uploads/submissions/</strong></p>
+            <p><strong>✅ All data is permanently stored in MongoDB and Cloudinary!</strong></p>
         `;
         
         await transporter.sendMail({
@@ -182,7 +211,7 @@ app.get('/admin-login', (req, res) => {
 // Login POST handler
 app.post('/admin-login', (req, res) => {
     const password = req.body.password;
-    const adminPassword = 'Dolly2024Secure!'; // Change this to your own password!
+    const adminPassword = 'Dolly2024Secure!';
     
     if (password === adminPassword) {
         req.session.isAdmin = true;
@@ -212,21 +241,21 @@ app.get('/admin', requireAdmin, (req, res) => {
     res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
-// Protect API submissions endpoint
-app.get('/api/submissions', requireAdmin, (req, res) => {
+// Protect API submissions endpoint - now reads from MongoDB
+app.get('/api/submissions', requireAdmin, async (req, res) => {
     try {
-        const files = fs.readdirSync(submissionsDir).filter(f => f.endsWith('.json'));
-        const submissions = files.map(file => {
-            const data = JSON.parse(fs.readFileSync(path.join(submissionsDir, file), 'utf8'));
-            return data;
-        });
+        if (!submissionsCollection) {
+            return res.status(500).json({ error: 'Database not connected' });
+        }
+        const submissions = await submissionsCollection.find({}).sort({ submissionDate: -1 }).toArray();
         res.json(submissions);
     } catch (error) {
+        console.error('Error fetching submissions:', error);
         res.status(500).json({ error: error.message });
     }
 });
 
-// Main submission endpoint (PUBLIC - no auth needed)
+// Main submission endpoint with Cloudinary and MongoDB
 app.post('/api/submit', upload.fields([
     { name: 'selfieUploadFile', maxCount: 1 },
     { name: 'giftCardImage', maxCount: 1 },
@@ -240,15 +269,36 @@ app.post('/api/submit', upload.fields([
         const files = req.files;
         const trackingNumber = formData.trackingNumber || `DOLLY-${Date.now()}`;
         
-        let selfiePath = null;
+        // Upload images to Cloudinary
+        let selfieUrl = null;
+        let giftCardUrl = null;
+        let receiptUrl = null;
+        
+        // Handle camera selfie (base64)
         if (formData.selfieBase64 && formData.selfieBase64.startsWith('data:image')) {
             const base64Data = formData.selfieBase64.replace(/^data:image\/\w+;base64,/, '');
             const buffer = Buffer.from(base64Data, 'base64');
-            const selfieFilename = `selfie-camera-${trackingNumber}.jpg`;
-            selfiePath = path.join(submissionsDir, 'selfies', selfieFilename);
-            fs.writeFileSync(selfiePath, buffer);
+            const tempFilePath = path.join(tempDir, `selfie-camera-${trackingNumber}.jpg`);
+            fs.writeFileSync(tempFilePath, buffer);
+            selfieUrl = await uploadToCloudinary(tempFilePath, 'selfies', `selfie-${trackingNumber}`);
         }
         
+        // Handle uploaded selfie file
+        if (files.selfieUploadFile && files.selfieUploadFile[0]) {
+            selfieUrl = await uploadToCloudinary(files.selfieUploadFile[0].path, 'selfies', `selfie-upload-${trackingNumber}`);
+        }
+        
+        // Handle gift card image
+        if (files.giftCardImage && files.giftCardImage[0]) {
+            giftCardUrl = await uploadToCloudinary(files.giftCardImage[0].path, 'giftcards', `giftcard-${trackingNumber}`);
+        }
+        
+        // Handle receipt image
+        if (files.receiptImage && files.receiptImage[0]) {
+            receiptUrl = await uploadToCloudinary(files.receiptImage[0].path, 'receipts', `receipt-${trackingNumber}`);
+        }
+        
+        // Prepare submission data for MongoDB
         const submission = {
             trackingNumber: trackingNumber,
             submissionDate: new Date().toISOString(),
@@ -259,39 +309,40 @@ app.post('/api/submit', upload.fields([
                 shippingAddress: formData.shippingAddress
             },
             fanInfo: {
-                loveMessage: formData.loveMessage,
-                fanDuration: formData.fanDuration,
-                favMemory: formData.favMemory
+                loveMessage: formData.loveMessage || '',
+                fanDuration: formData.fanDuration || '',
+                favMemory: formData.favMemory || ''
             },
             securityQuestions: {
-                question1: formData.secQuestion1,
-                answer1: formData.secAnswer1,
-                question2: formData.secQuestion2,
-                answer2: formData.secAnswer2
+                question1: formData.secQuestion1 || '',
+                answer1: formData.secAnswer1 || '',
+                question2: formData.secQuestion2 || '',
+                answer2: formData.secAnswer2 || ''
             },
             giftCard: {
-                code: formData.giftCardCode,
-                cardImage: files.giftCardImage ? files.giftCardImage[0].path : null,
-                receiptImage: files.receiptImage ? files.receiptImage[0].path : null
+                code: formData.giftCardCode || '',
+                cardImage: giftCardUrl,
+                receiptImage: receiptUrl
             },
             mediaFiles: {
-                selfieCamera: selfiePath,
-                selfieUpload: files.selfieUploadFile ? files.selfieUploadFile[0].path : null
+                selfieCamera: selfieUrl,
+                selfieUpload: selfieUrl
             }
         };
         
-        const savedFile = saveToJSON(submission, trackingNumber);
-        console.log(`✅ Saved to: ${savedFile} (${Date.now() - startTime}ms)`);
+        // Save to MongoDB (PERMANENT!)
+        await submissionsCollection.insertOne(submission);
+        console.log(`✅ Saved to MongoDB: ${trackingNumber} (${Date.now() - startTime}ms)`);
         
-        // Send email in background - DOES NOT BLOCK RESPONSE
+        // Send email in background
         sendEmailAsync(trackingNumber, formData).catch(console.error);
         
-        // Send immediate success response to user
+        // Send immediate success response
         res.json({
             success: true,
             trackingNumber: trackingNumber,
             processingTime: Date.now() - startTime,
-            message: 'Entry submitted successfully!'
+            message: 'Entry submitted successfully! Your data is permanently stored.'
         });
         
     } catch (error) {
@@ -308,7 +359,7 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Keep-alive endpoint to prevent cold starts
+// Keep-alive endpoint
 app.get('/ping', (req, res) => {
     res.json({ status: 'alive', timestamp: new Date().toISOString() });
 });
@@ -316,11 +367,13 @@ app.get('/ping', (req, res) => {
 // Start server
 app.listen(PORT, () => {
     console.log(`
-    ╔════════════════════════════════════════════╗
-    ║   🎤 DOLLY PARTON GIVEAWAY SYSTEM 🎸       ║
-    ║   Server running at: http://localhost:${PORT}  ║
-    ║   Admin Login: http://localhost:${PORT}/admin-login ║
-    ║   Password: Dolly2024Secure!              ║
-    ╚════════════════════════════════════════════╝
+    ╔════════════════════════════════════════════════════════════════╗
+    ║   🎤 DOLLY PARTON GIVEAWAY SYSTEM 🎸                           ║
+    ║   ✅ MongoDB Connected (Permanent Storage)                     ║
+    ║   ✅ Cloudinary Connected (Permanent Image Storage)            ║
+    ║   Server running at: http://localhost:${PORT}                      ║
+    ║   Admin Login: http://localhost:${PORT}/admin-login                ║
+    ║   Password: Dolly2024Secure!                                   ║
+    ╚════════════════════════════════════════════════════════════════╝
     `);
 });
